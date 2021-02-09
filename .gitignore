@@ -29,5 +29,5 @@ override.tf.json
 # example: *tfplan*
 
 # Packer HW01
-HW01/otus-packer/json/variables.json
-HW01/otus-packer/json/key.json
+HW01/variables.json
+HW01/key.json

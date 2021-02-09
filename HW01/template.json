@@ -1,0 +1,32 @@
+{
+  "variables": {
+    "folder_id": "{{env `YC_FOLDER`}}",
+    "image_description": null
+  },
+  "builders": [
+    {
+      "type": "yandex",
+      "service_account_key_file": "key.json",
+      "folder_id": "{{user `folder_id`}}",
+      "image_name": "ubuntu-2004-lts-nginx-{{isotime | clean_resource_name}}",
+      "image_family": "ubuntu-web-server",
+      "image_description": "{{user `image_description`}}",
+      "source_image_family": "ubuntu-2004-lts",
+      "use_ipv4_nat": true,
+      "disk_type": "network-ssd",
+      "ssh_username": "ubuntu"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "echo 'updating apt cache'",
+        "sudo apt update -y",
+        "sudo apt install -y nginx nano git",
+        "sudo systemctl enable nginx",
+        "curl localhost"
+      ]
+    }
+  ]
+}

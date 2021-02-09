@@ -198,7 +198,7 @@
    ==> Builds finished. The artifacts of successful builds are:
    --> yandex: A disk image was created: ubuntu-2004-lts-nginx-2021-02-08t19-05-40z (id: fd8aq8orin5a0uof3iqa) with family name ubuntu-web-server
    ```
-   Получившийся в финале template.json: https://github.com/dmerkuriev/IaC/otus-packer/json/template.json
+   Получившийся в финале template.json: https://github.com/dmerkuriev/IaC/HW01/template.json
 
    Как вариант задания со (*) реализуйте это не на Yandex.Cloud, а на любом другом облаке или системе виртуализациию  
    Делать не стал.
