@@ -149,9 +149,9 @@
 6. (*) Вставьте путь к вашему ключу в template.json в "service_account_key_file" в блок builders и создайте из этого шаблона образ (вероятно понадобится удалить из шаблона параметр token).  
    
    Из template.json в блоке variables удаляем строчку:  
-   "token": "{{env `YC_TOKEN`}}",  
+   "token": "{{env \`YC_TOKEN\`}}",  
    в блоке builders удаляем строчку:  
-   "token": "{{user `token`}}",  
+   "token": "{{user \`token\`}}",  
    в блоке builders указываем переменную "service_account_key_file" в которой указываем путь до ключа key.json, который мы создали выше:  
    "service_account_key_file": "key.json",  
 
@@ -161,7 +161,7 @@
    в блоке builders меняем строку  
    "image_description": "my custom ubuntu with nginx",  
    на строку:  
-   "image_description": "{{user `image_description`}}",  
+   "image_description": "{{user \`image_description`}}",  
 
    Тогда при запуске сборки можно будет определить перменную image_description на свое значение, например запустив сборку следующей командой:  
    ```  
