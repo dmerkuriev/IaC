@@ -165,7 +165,7 @@
 
    Тогда при запуске сборки можно будет определить перменную image_description на свое значение, например запустив сборку следующей командой:  
    ```  
-   $ packer build -var-file variables.json -var image_description="user image description from cli" template.json
+   $ packer build -var image_description="user image description from cli" template.json
    ```  
    Посмотреть результат подстановки переменной image_description можно выполнив команду:
    ```
@@ -188,7 +188,7 @@
 8. Удалите созданные образы:
    ```
    yc compute image list
-   yc compute image delete "имя образа"
+   yc compute image delete "id образа"
    ```
 
 9. Пришлите последние строчки вывода packer build (те, в которых указан id) и получившийся в финале template.json

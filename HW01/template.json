@@ -6,7 +6,7 @@
   "builders": [
     {
       "type": "yandex",
-      "service_account_key_file": "key.json",
+      "service_account_key_file": "/home/dm/yandex-cloud/yc_packer_key.json",
       "folder_id": "{{user `folder_id`}}",
       "image_name": "ubuntu-2004-lts-nginx-{{isotime | clean_resource_name}}",
       "image_family": "ubuntu-web-server",
@@ -14,7 +14,11 @@
       "source_image_family": "ubuntu-2004-lts",
       "use_ipv4_nat": true,
       "disk_type": "network-ssd",
-      "ssh_username": "ubuntu"
+      "ssh_username": "ubuntu",
+      "disk_size_gb": "10",
+      "instance_cores": "2",
+      "instance_mem_gb": "2",
+      "preemptible": "true"
     }
   ],
   "provisioners": [
