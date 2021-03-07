@@ -31,3 +31,6 @@ override.tf.json
 # Packer HW01
 HW01/variables.json
 HW01/key.json
+
+# terraform vars
+*.tfvars
