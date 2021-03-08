@@ -6,45 +6,117 @@
 1. Установим terraform на рабочую станцию.
    Инструкция по установке доступна на оф. сайте https://www.terraform.io/downloads.html
    Инструкция по установке в Ubuntu https://www.terraform.io/docs/cli/install/apt.html
-   После установки проверим версию terraform
+   После установки проверим версию terraform:
    $ terraform -v
    Terraform v0.14.7
 
-2. Начнем описывать тестовую среду.
-   Документация по провайдеру для я.оьлака доступна по ссылке: https://registry.terraform.io/providers/yandex-cloud/yandex/latest/docs
-   В самом начале опишем в файле mail.tf, что будем работать с я.облаком:
+2. Опишим тестовую среду.
+   Документация по провайдеру для я.облака доступна по ссылке: https://registry.terraform.io/providers/yandex-cloud/yandex/latest/docs
+   В самом начале опишем в файле main.tf, что будем работать с я.облаком:
    terraform {
-  required_providers {
-    yandex = {
-      source = "yandex-cloud/yandex"
+     required_providers {
+       yandex = {
+         source = "yandex-cloud/yandex"
+     }
     }
-  }
-}
-
-provider "yandex" {
-  cloud_id  = var.cloud_id
-  folder_id = var.folder_id
-  zone      = var.zone
-  token     = var.yc_token
-}
-   provider "yandex" {
-     token     = "<OAuth>"
-     cloud_id  = "<идентификатор облака>"
-     folder_id = "<идентификатор каталога>"
-     zone      = "ru-central1-a"
    }
 
-   Выполним команду terraform init
-   
-   узнать список id можно запустив команду
+   provider "yandex" {
+     cloud_id  = var.cloud_id
+     folder_id = var.folder_id
+     zone      = var.zone
+     token     = var.yc_token
+   }
+
+   Опишем переменные в файле variables.tf
+   variable "zone" {
+     type = string
+   }
+
+   variable "cloud_id" {
+     type = string
+   }
+
+   variable "folder_id" {
+     type = string
+   }
+
+   variable "yc_token" {
+     type = string
+   }
+
+   variable "image_id" {
+     type = string
+   }
+
+   Выставим значение переменных в файле terraform.tfvars
+   yc_token  = "<OAuth>"
+   cloud_id  = "<идентификатор облака>"
+   folder_id = "<идентификатор каталога>"
+   zone      = "ru-central1-a"
+   image_id  = "fd8vmcue7aajpmeo39kk"
+
+   узнать список image_id можно запустив команду:
    $ yc compute image list --folder-id standard-image
-   | fd8vmcue7aajpmeo39kk | ubuntu-2004-lts-1590073935                               | ubuntu-2004-lts              | f2e8e855i10b6gs5pom0 | READY  |
-| fd8vp7kchohg5tb9c4rs | debian-9-1538731924                                      | debian-9                     | f2evfhkcsl5npdcfb09t | READY  |
-| fd8vpdk1hs9b1kuiiu13 | ubuntu-2004-lts-gpu-1606751539                           | ubuntu-2004-lts-gpu          | f2eclsqdgklas1fb97bu | READY  |
-| fd8vpento05muq6pc1oa | fedora-28-1540828205                                     | fedora-28                    | f2eo5pfo65mj806q0hb5 | READY  |
-| fd8vqk0bcfhn31stn2ts | ubuntu-1804-lts-1593428267-1593437760                    | ubuntu-1804-lts              | f2e59sb6j1acjjkhb4sc | READY  |
-| fd8vu2kvvdomdcfe0i0r | fedora-28-1537474623                                     | fedora-28                    | f2evncnukp6qfbclotnu | READY  |
-+----------------------+----------------------------------------------------------+------------------------------+----------------------+--------+
+
+   Далее нужно выполнить команду terraform init.
+
+   Добавим описание создания двух ВМ, которые в будущем будут использоваться для back-end серверов.
+
+   resource "yandex_compute_instance" "back" {
+     count = 2
+     name  = "back-${count.index}"
+
+     resources {
+       cores  = 2
+       memory = 2
+     }
+
+     boot_disk {
+       initialize_params {
+       image_id = var.image_id
+       }
+     }
+
+     network_interface {
+       subnet_id = yandex_vpc_subnet.subnet-1.id
+       nat       = true
+     }
+
+     metadata = {
+       ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+     }
+
+     connection {
+       type        = "ssh"
+       user        = "ubuntu"
+       private_key = file("~/.ssh/id_rsa")
+       host        = self.network_interface.0.nat_ip_address
+     }
+
+     provisioner "remote-exec" {
+       inline = [
+         "sudo echo 'Hello back'",
+       ]
+     }
+   }
+
+   Добавим создание сети и подсети.
+
+   resource "yandex_vpc_network" "network-1" {
+     name = "network1"
+   }
+
+   resource "yandex_vpc_subnet" "subnet-1" {
+     name           = "subnet1"
+     zone           = "ru-central1-c"
+     network_id     = yandex_vpc_network.network-1.id
+     v4_cidr_blocks = ["192.168.10.0/24"]
+   }
+
+   Аналогично тому как мы добавили создание ВМ для back-end, опишем создание ВМ для front-end и db серверов.
+
+  
 
 
 3. dfdsfsd

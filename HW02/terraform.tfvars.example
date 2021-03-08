@@ -1,4 +1,5 @@
-token     = "<OAuth>"
+yc_token  = "<OAuth>"
 cloud_id  = "<идентификатор облака>"
 folder_id = "<идентификатор каталога>"
 zone      = "ru-central1-a"
+image_id  = "fd8vmcue7aajpmeo39kk"
