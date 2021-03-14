@@ -74,7 +74,7 @@
 
      boot_disk {
        initialize_params {
-       image_id = var.image_id
+         image_id = var.image_id
        }
      }
 
@@ -116,7 +116,153 @@
 
    Аналогично тому как мы добавили создание ВМ для back-end, опишем создание ВМ для front-end и db серверов.
 
-  
+   resource "yandex_compute_instance" "front" {
+     count = 2
+     name  = "web-${count.index}"
 
+     resources {
+       cores  = 2
+       memory = 2
+     }
 
-3. dfdsfsd
+     boot_disk {
+       initialize_params {
+         image_id = var.image_id
+       }
+     }
+
+     network_interface {
+       subnet_id = yandex_vpc_subnet.subnet-1.id
+       nat       = true
+     }
+
+     metadata = {
+       ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+     }
+
+     connection {
+       type        = "ssh"
+       user        = "ubuntu"
+       private_key = file("~/.ssh/id_rsa")
+       host        = self.network_interface.0.nat_ip_address
+     }
+
+     provisioner "remote-exec" {
+       inline = [
+         "sudo echo 'hello front'",
+       ]
+     }
+   }
+
+   resource "yandex_compute_instance" "db" {
+     count = 2
+     name  = "db-${count.index}"
+
+     resources {
+       cores  = 2
+       memory = 2
+     }
+
+     boot_disk {
+       initialize_params {
+         image_id = var.image_id
+       }
+     }
+
+     network_interface {
+       subnet_id = yandex_vpc_subnet.subnet-1.id
+       nat       = true
+     }
+
+     metadata = {
+       ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+     }
+
+     connection {
+       type        = "ssh"
+       user        = "ubuntu"
+       private_key = file("~/.ssh/id_rsa")
+       host        = self.network_interface.0.nat_ip_address
+     }
+
+     provisioner "remote-exec" {
+       inline = [
+         "sudo echo 'hello db'",
+       ]
+     }
+   }
+
+   Добавим вывод внешних и внутренних адресов в выводные переменные и вынесем их в отдельный файл outputs.tf
+   output "internal_ip_address_front" {
+     value = yandex_compute_instance.front.*.network_interface.0.ip_address
+   }
+
+   output "external_ip_address_front" {
+     value = yandex_compute_instance.front.*.network_interface.0.nat_ip_address
+   }
+
+   output "internal_ip_address_back" {
+     value = yandex_compute_instance.back.*.network_interface.0.ip_address
+   }
+
+   output "external_ip_address_back" {
+     value = yandex_compute_instance.back.*.network_interface.0.nat_ip_address
+   }
+
+   output "internal_ip_address_db" {
+     value = yandex_compute_instance.db.*.network_interface.0.ip_address
+   }
+
+   output "external_ip_address_db" {
+     value = yandex_compute_instance.db.*.network_interface.0.nat_ip_address
+   }
+
+   Проверим написаный нами код с помощью команды:
+   $ terraform validate
+   Success! The configuration is valid.
+
+   Проверим какие ресурсы будут созданы с помощью команды:
+   $ terraform plan
+   ...
+
+   Запустим выполнение:
+   $ terraform apply
+   ...
+   yandex_compute_instance.back[1] (remote-exec): Hello back
+   yandex_compute_instance.back[0] (remote-exec): Hello back
+   yandex_compute_instance.front[0] (remote-exec): hello front
+   yandex_compute_instance.front[1] (remote-exec): hello front
+   yandex_compute_instance.db[0] (remote-exec): hello db
+   yandex_compute_instance.db[1] (remote-exec): hello db
+   ...
+   Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
+
+   Outputs:
+
+   external_ip_address_back = [
+     "178.154.213.144",
+     "178.154.208.143",
+   ]
+   external_ip_address_db = [
+     "178.154.210.214",
+     "178.154.208.112",
+   ]
+   external_ip_address_front = [
+     "178.154.210.143",
+     "178.154.211.254",
+   ]
+   internal_ip_address_back = [
+     "192.168.10.22",
+     "192.168.10.12",
+   ]
+   internal_ip_address_db = [
+     "192.168.10.18",
+     "192.168.10.13",
+   ]
+   internal_ip_address_front = [
+     "192.168.10.25",
+     "192.168.10.9",
+   ]
+
+   В конце видим результат наш выводных переменных с адресами.
+
