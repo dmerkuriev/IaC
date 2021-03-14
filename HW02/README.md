@@ -1,6 +1,6 @@
 # Домашнее задание № 2.
 
-Развернуть при помощи Terraform тестовую среду, включающую в себя хосты для front-end, back-end и базы данных.
+Развернуть при помощи Terraform тестовую среду, включающую в себя хосты для front-end, back-end и базы данных.  
 Цель: Развернуть при помощи Terraform тестовую среду, включающую в себя хосты для front-end, back-end и базы данных. 
 
 1. ### Установим terraform на рабочую станцию.  
@@ -241,7 +241,8 @@
    ```
    $ terraform plan
    ...
-   
+   Plan: 8 to add, 0 to change, 0 to destroy.
+   ...
    ```  
 
    Запустим выполнение:  
@@ -286,3 +287,71 @@
    ```
    В конце видим результат наш выводных переменных с адресами. Можно зайти в веб-интерфейс я.облака и убедится что описанные нами выше ресурсы созданы.
 
+5. ### Remote state.
+   Настроим хранение terraform в yandex object storage.  
+   Весь процесс хорошо описан в документации: https://cloud.yandex.ru/docs/solutions/infrastructure-management/terraform-state-storage  
+
+   Создадим сервисный аккаунт и статический ключ доступа.  
+   ```
+   $ yc iam service-account create --name terraform --folder-id xxxxxxxxxxxxxxxxx
+   id: yyyyyyyyyyyyyyyyyyyy
+   folder_id: xxxxxxxxxxxxxxxxx
+   created_at: "2021-03-14T12:51:19.746176Z"
+   name: terraform
+   $
+   $ yc resource-manager folder add-access-binding --id xxxxxxxxxxxxxxxxx --role editor --service-account-id yyyyyyyyyyyyyyyyyyyy
+   done (1s)
+   $
+   $ yc iam service-account list
+   +----------------------+-----------+
+   |          ID          |   NAME    |
+   +----------------------+-----------+
+   | yyyyyyyyyyyyyyyyyyyy | terraform |
+   | zzzzzzzzzzzzzzzzzzzz | packer    |
+   +----------------------+-----------+
+   $
+   $ yc iam access-key create --service-account-name terraform
+   access_key:
+   id: yyyyyyyyyyyyyyyyyyyy
+   service_account_id: ...
+   created_at: "2021-03-14T13:07:03.669780Z"
+   key_id: ...
+   secret: ...
+   ```
+   Далее создадим бакет yandex object storage (я создал через веб-интерфейс, но можно и с помощью terraform) и опишем конфигурацию remote state в файле backend.tf  
+   ```
+   terraform {
+     backend "s3" {
+       endpoint   = "storage.yandexcloud.net"
+       bucket     = "terraform-state-backend-object-storage"
+       region     = "ru-central1"
+       key        = "terraform/test/remote.tfstate"
+       access_key = "xxxxxx"
+       secret_key = "yyyyyy"
+
+       skip_region_validation      = true
+       skip_credentials_validation = true
+     }
+   }
+   ```
+   Далее выполняем команду terraform init и убеждаемся, что terraform увидел наш бакет и готов хранить state там:
+   ```
+   $ terraform init
+
+   Initializing the backend...
+
+   Successfully configured the backend "s3"! Terraform will automatically
+   use this backend unless the backend configuration changes.
+   ...
+   ```
+   Можно развернуть тестовые ВМ.
+   ```
+   $ terraform apply
+   ...
+   Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
+   ...
+   ```
+   После того как убедились, что все в порядке, не забываем удалить созданные ресурсы командой terraform destroy.
+
+   P.S.  
+   Так как в конфигурации хранилища нельзя использовать переменные, то в репозиторий будет заккомичен файл backend.tf.example.
